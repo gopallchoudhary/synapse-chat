@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const spaceGroteskHeading = Space_Grotesk({
@@ -56,7 +57,7 @@ export default function RootLayout({
 							enableSystem
 							disableTransitionOnChange
 						>
-							{children}
+							<TooltipProvider>{children}</TooltipProvider>
 						</ThemeProvider>
 					</QueryProvider>
 				</ClerkProvider>

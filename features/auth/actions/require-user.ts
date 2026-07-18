@@ -4,16 +4,16 @@ import { prisma } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 
 export async function requireUser() {
-    const { userId } = await auth.protect()
+	const { userId } = await auth.protect();
 
-    const user = await prisma.user.findUnique({
-        where: {
-            id: userId
-        }
-    })
-    if (!user) {
-        throw new Error("User not found. Complete Onboarding first.")
-    }
+	const user = await prisma.user.findUnique({
+		where: {
+			clerkId: userId,
+		},
+	});
+	if (!user) {
+		throw new Error("User not found. Complete Onboarding first.");
+	}
 
-    return user
+	return user;
 }

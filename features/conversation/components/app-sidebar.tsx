@@ -69,18 +69,22 @@ export function AppSidebar() {
 						<SidebarMenuButton
 							size="lg"
 							className="font-semibold tracking-tight"
-							render={<Link href="/" />}
+							asChild
 						>
-							<span className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
-								C
-							</span>
-							<span>ChaiGPT</span>
+							<Link href="/">
+								<span className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
+									C
+								</span>
+								<span>ChaiGPT</span>
+							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 					<SidebarMenuItem>
-						<SidebarMenuButton tooltip="New chat" render={<Link href="/" />}>
-							<PlusIcon />
-							<span>New chat</span>
+						<SidebarMenuButton tooltip="New chat" asChild>
+							<Link href="/">
+								<PlusIcon />
+								<span>New chat</span>
+							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
@@ -175,23 +179,23 @@ function ChatItem({
 			<SidebarMenuButton
 				isActive={isActive}
 				tooltip={conversation.title}
-				render={<Link href={`/c/${conversation.id}`} />}
+				asChild
 				className={cn(isActive && "font-medium")}
 			>
-				<span className="truncate">{conversation.title}</span>
+				<Link href={`/c/${conversation.id}`}>
+					<span className="truncate">{conversation.title}</span>
+				</Link>
 			</SidebarMenuButton>
 
 			<DropdownMenu>
-				<DropdownMenuTrigger
-					render={
-						<SidebarMenuAction
-							showOnHover
-							className="data-popup-open:bg-sidebar-accent"
-						/>
-					}
-				>
-					<MoreHorizontalIcon />
-					<span className="sr-only">Chat actions</span>
+				<DropdownMenuTrigger asChild>
+					<SidebarMenuAction
+						showOnHover
+						className="data-popup-open:bg-sidebar-accent"
+					>
+						<MoreHorizontalIcon />
+						<span className="sr-only">Chat actions</span>
+					</SidebarMenuAction>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent side="right" align="start">
 					<DropdownMenuItem onClick={handleRename}>
