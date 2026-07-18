@@ -22,5 +22,87 @@ function toUIMessageParts(
 		return stored;
 	}
 
-	return [{type: "text", text: content}];
+	return [{ type: "text", text: content }];
+}
+
+export async function loadChatMessages(
+	conversationId: string,
+): Promise<UIMessage[]> {
+	const rows = await prisma.message.findMany({
+		where: {
+			conversationId,
+		},
+		orderBy: {
+			createdAt: "asc",
+		},
+	});
+
+	return rows.map((row) => ({
+		id: row.id,
+		role: row.role === "ASSISTANT" ? "assistant" : "user",
+		parts: toUIMessageParts(row.parts, row.content),
+	}));
+}
+
+type SaveChatMessagesOptions = {
+	updateTitle?: boolean;
+};
+
+// save chat messages...
+
+export async function saveChatMessages(
+	conversationId: string,
+	messages: UIMessage[],
+	options: SaveChatMessagesOptions = {},
+) {
+	const { updateTitle = true } = options;
+
+	for (const message of messages) {
+		if (message.role === "system") continue;
+
+		const content = getMessageText(message);
+		const role = message.role === "assistant" ? "ASSISTANT" : "USER";
+
+		await prisma.message.upsert({
+			where: { id: message.id },
+			create: {
+				id: message.id,
+				conversationId,
+				role,
+				status: "COMPLETE",
+				content,
+				parts: message.parts as Prisma.InputJsonValue,
+			},
+			update: {
+				content,
+				parts: message.parts as Prisma.InputJsonValue,
+				status: "COMPLETE",
+			},
+		});
+	}
+
+	const conversation = await prisma.conversation.findFirstOrThrow({
+		where: {
+			id: conversationId,
+		},
+		select: {
+			title: true,
+		},
+	});
+
+	const firstUser = messages.find((message) => message.role === "user");
+	const firstUserText = firstUser ? getMessageText(firstUser).trim() : "";
+
+	await prisma.conversation.update({
+		where: {
+			id: conversationId,
+		},
+		data: {
+			astMessageAt: new Date(),
+			title:
+				updateTitle && conversation.title === "New Chat" && firstUserText
+					? firstUserText.slice(0, 48)
+					: conversation.title,
+		},
+	});
 }
