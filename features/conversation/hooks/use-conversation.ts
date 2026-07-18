@@ -1,8 +1,10 @@
+"use client";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	createConversation,
 	deleteConversation,
-	listConversation,
+	listConversations,
 	updateConversation,
 } from "../actions/conversation-action";
 import { useRouter } from "next/navigation";
@@ -28,10 +30,10 @@ export function useCreateConversation() {
 	});
 }
 
-export function useConversation() {
+export function useConversations() {
 	return useQuery({
 		queryKey: queryKeys.conversations.all,
-		queryFn: () => listConversation(),
+		queryFn: () => listConversations(),
 	});
 }
 
@@ -64,7 +66,7 @@ export function useUpdateConversation() {
 	});
 }
 
-export function useDeleteConversation(activeId: string) {
+export function useDeleteConversation(activeId?: string) {
 	const queryClient = useQueryClient();
 	const router = useRouter();
 
@@ -79,14 +81,14 @@ export function useDeleteConversation(activeId: string) {
 				queryKey: queryKeys.messages.byConversation(id),
 			});
 
-            if(activeId === id) {
-                router.push('/')
-            }
+			if (activeId === id) {
+				router.push("/");
+			}
 
-            toast.success('Chat Deleted')
+			toast.success("Chat Deleted");
 		},
-        onError: (error: Error) => {
-            toast.error(error.message || 'Chat could not be found')
-        }
+		onError: (error: Error) => {
+			toast.error(error.message || "Chat could not be found");
+		},
 	});
 }

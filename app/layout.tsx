@@ -45,6 +45,7 @@ export default function RootLayout({
 				inter.variable,
 				spaceGroteskHeading.variable,
 			)}
+			suppressHydrationWarning
 		>
 			<body className="min-h-full flex flex-col">
 				<ClerkProvider>

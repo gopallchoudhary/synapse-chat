@@ -1,12 +1,14 @@
-import { ModeToggle } from "@/components/ui/mode-toggle";
-import { UserButton } from "@clerk/nextjs";
+import { startNewChat } from "@/features/home/actions/start-new-chat";
+import { redirect } from "next/navigation";
+import React from "react";
 
-export default function Home() {
-	return (
-		<div>
-			<h1>Synapse Chat</h1>
-			<ModeToggle />
-			<UserButton />
-		</div>
-	);
-}
+/**
+ * Home page — creates a new chat and redirects to `/c/{id}`.
+ */
+const page = async () => {
+	const conversationId = await startNewChat();
+
+	redirect(`/c/${conversationId}`);
+};
+
+export default page;

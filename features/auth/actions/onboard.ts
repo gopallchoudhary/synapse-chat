@@ -9,7 +9,7 @@ export async function onBoardUser() {
         throw new Error("Clerk user not found")
     }
 
-    const email = clerkUser.emailAddresses[0].emailAddress ?? null
+    const email = clerkUser.emailAddresses[0]?.emailAddress ?? null
 
     return await prisma.user.upsert({
         where: {
