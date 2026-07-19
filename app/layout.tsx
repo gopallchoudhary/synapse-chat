@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ClientThemeProvider } from "@/components/providers/client-theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ClerkProvider } from "@clerk/nextjs";
 
@@ -51,14 +51,14 @@ export default function RootLayout({
 			<body className="min-h-full flex flex-col">
 				<ClerkProvider>
 					<QueryProvider>
-						<ThemeProvider
+						<ClientThemeProvider
 							attribute="class"
 							defaultTheme="system"
 							enableSystem
 							disableTransitionOnChange
 						>
 							<TooltipProvider>{children}</TooltipProvider>
-						</ThemeProvider>
+						</ClientThemeProvider>
 					</QueryProvider>
 				</ClerkProvider>
 			</body>

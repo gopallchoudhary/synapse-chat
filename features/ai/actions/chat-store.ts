@@ -98,7 +98,7 @@ export async function saveChatMessages(
 			id: conversationId,
 		},
 		data: {
-			astMessageAt: new Date(),
+			lastMessageAt: new Date(),
 			title:
 				updateTitle && conversation.title === "New Chat" && firstUserText
 					? firstUserText.slice(0, 48)
