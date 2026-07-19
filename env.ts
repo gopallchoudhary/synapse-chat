@@ -6,6 +6,7 @@ const envSchema = z.object({
 	CLERK_SECRET_KEY: z.string(),
 	OPENROUTER_API_KEY: z.string(),
 	OPENROUTER_BASE_URL: z.url().default("https://openrouter.ai/api/v1"),
+	TAVILY_API_KEY: z.string()
 });
 
 function createEnvSchema(env: NodeJS.ProcessEnv) {

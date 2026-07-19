@@ -3,6 +3,7 @@ import {
 	saveChatMessages,
 } from "@/features/ai/actions/chat-store";
 import { getChatModel } from "@/features/ai/utils/model";
+import { webSearchTool } from "@/features/ai/tools/web-search-tool";
 import { requireUser } from "@/features/auth/actions/require-user";
 import { prisma } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
@@ -18,8 +19,12 @@ import {
 export async function POST(req: Request) {
 	await auth.protect();
 
-	// get message and conversation if from the user
-	const { message, id }: { message: UIMessage; id: string } = await req.json();
+	// get message, conversation id and optional web search flag from the client
+	const {
+		message,
+		id,
+		webSearch = false,
+	}: { message: UIMessage; id: string; webSearch?: boolean } = await req.json();
 
 	if (!message || !id) {
 		return new Response("Missing message or conversation id", { status: 400 });
@@ -55,10 +60,24 @@ export async function POST(req: Request) {
 		? previousMessages
 		: [...previousMessages, message];
 
+	const tools = webSearch ? { webSearch: webSearchTool } : undefined;
+
 	const result = streamText({
 		model: getChatModel(conversation.model),
 		system: conversation.systemPrompt ?? "You are a helpful chat assistant",
-		messages: await convertToModelMessages(messages),
+		messages: await convertToModelMessages(messages, { tools }),
+		// Conditionally enable web search tool when the user opts in per-message.
+		// maxSteps: 3 lets the model call the tool and then generate its response
+		// in a single request while keeping token usage minimal.
+		// toolChoice: "required" forces the model to actually call the search tool
+		// instead of declining with "I don't have real-time data."
+		...(webSearch
+			? {
+					tools,
+					maxSteps: 3,
+					toolChoice: "required" as const,
+				}
+			: {}),
 	});
 
 	result.consumeStream();

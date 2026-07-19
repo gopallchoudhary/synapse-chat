@@ -2,7 +2,7 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import React, { useMemo } from "react";
+import React, { useRef } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useConversations } from "../hooks/use-conversation";
 import { useChat } from "@ai-sdk/react";
@@ -24,7 +24,20 @@ export const ConversationView = ({
 	const queryClient = useQueryClient();
 	const { data: conversations } = useConversations();
 
-	const transport = useMemo(
+	/** Per-message web search toggle; resets to false after each send. */
+	const [webSearchEnabled, setWebSearchEnabled] = React.useState(false);
+
+	/**
+	 * Keep a ref in sync with the state so prepareSendMessagesRequest can
+	 * always read the *current* value without needing to recreate the transport.
+	 * (Re-creating the transport after mount doesn't work because useChat
+	 * captures the initial transport instance.)
+	 */
+	const webSearchRef = useRef(webSearchEnabled);
+	webSearchRef.current = webSearchEnabled;
+
+	// Transport is stable — it reads from the ref, not the closure.
+	const [transport] = React.useState(
 		() =>
 			new DefaultChatTransport({
 				api: "/api/chat",
@@ -32,10 +45,10 @@ export const ConversationView = ({
 					body: {
 						id,
 						message: messages.at(-1),
+						webSearch: webSearchRef.current,
 					},
 				}),
 			}),
-		[],
 	);
 
 	const { messages, sendMessage, status } = useChat({
@@ -72,10 +85,16 @@ export const ConversationView = ({
 
 			<ChatComposer
 				onSend={(text) => {
+					// Reset toggle first so the ref is already false for the next message,
+					// but the current send still reads webSearchRef.current = true if it was on.
+					// We capture the current value before resetting.
 					void sendMessage({ text });
+					setWebSearchEnabled(false);
 				}}
 				isSending={status !== "ready"}
 				autoFocus
+				webSearchEnabled={webSearchEnabled}
+				onWebSearchToggle={setWebSearchEnabled}
 			/>
 		</div>
 	);
