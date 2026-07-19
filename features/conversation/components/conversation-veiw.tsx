@@ -24,30 +24,24 @@ export const ConversationView = ({
 	const queryClient = useQueryClient();
 	const { data: conversations } = useConversations();
 
-	/** Per-message web search toggle; resets to false after each send. */
 	const [webSearchEnabled, setWebSearchEnabled] = React.useState(false);
+	const pendingWebSearchRef = useRef(false);
 
-	/**
-	 * Keep a ref in sync with the state so prepareSendMessagesRequest can
-	 * always read the *current* value without needing to recreate the transport.
-	 * (Re-creating the transport after mount doesn't work because useChat
-	 * captures the initial transport instance.)
-	 */
-	const webSearchRef = useRef(webSearchEnabled);
-	webSearchRef.current = webSearchEnabled;
-
-	// Transport is stable — it reads from the ref, not the closure.
 	const [transport] = React.useState(
 		() =>
 			new DefaultChatTransport({
 				api: "/api/chat",
-				prepareSendMessagesRequest: ({ id, messages }) => ({
-					body: {
-						id,
-						message: messages.at(-1),
-						webSearch: webSearchRef.current,
-					},
-				}),
+				prepareSendMessagesRequest: ({ id, messages }) => {
+					const enabled = pendingWebSearchRef.current;
+					pendingWebSearchRef.current = false;
+					return {
+						body: {
+							id,
+							message: messages.at(-1),
+							webSearch: enabled,
+						},
+					};
+				},
 			}),
 	);
 
@@ -85,11 +79,9 @@ export const ConversationView = ({
 
 			<ChatComposer
 				onSend={(text) => {
-					// Reset toggle first so the ref is already false for the next message,
-					// but the current send still reads webSearchRef.current = true if it was on.
-					// We capture the current value before resetting.
-					void sendMessage({ text });
+					pendingWebSearchRef.current = webSearchEnabled;
 					setWebSearchEnabled(false);
+					void sendMessage({ text });
 				}}
 				isSending={status !== "ready"}
 				autoFocus

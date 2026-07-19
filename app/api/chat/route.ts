@@ -20,11 +20,10 @@ export async function POST(req: Request) {
 	await auth.protect();
 
 	// get message, conversation id and optional web search flag from the client
-	const {
-		message,
-		id,
-		webSearch = false,
-	}: { message: UIMessage; id: string; webSearch?: boolean } = await req.json();
+	const body = await req.json();
+	const { message, id, webSearch = false }: { message: UIMessage; id: string; webSearch?: boolean } = body;
+
+	console.log("[chat/route.ts] webSearch flag:", webSearch, "body keys:", Object.keys(body));
 
 	if (!message || !id) {
 		return new Response("Missing message or conversation id", { status: 400 });
@@ -80,11 +79,10 @@ export async function POST(req: Request) {
 			: {}),
 	});
 
-	result.consumeStream();
-
 	return createUIMessageStreamResponse({
 		stream: toUIMessageStream({
 			stream: result.stream,
+			tools,
 			originalMessages: messages,
 			generateMessageId: createIdGenerator({ prefix: "msg", size: 16 }),
 			onEnd: async ({ messages: finalMessages }) => {

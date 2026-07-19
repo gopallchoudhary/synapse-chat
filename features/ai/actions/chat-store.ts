@@ -37,11 +37,19 @@ export async function loadChatMessages(
 		},
 	});
 
-	return rows.map((row) => ({
-		id: row.id,
-		role: row.role === "ASSISTANT" ? "assistant" : "user",
-		parts: toUIMessageParts(row.parts, row.content),
-	}));
+	return rows.map((row) => {
+		const roleMap: Record<string, UIMessage["role"]> = {
+			USER: "user",
+			ASSISTANT: "assistant",
+			SYSTEM: "system",
+			TOOL: "assistant",
+		};
+		return {
+			id: row.id,
+			role: roleMap[row.role] ?? "user",
+			parts: toUIMessageParts(row.parts, row.content),
+		};
+	});
 }
 
 type SaveChatMessagesOptions = {
@@ -61,7 +69,12 @@ export async function saveChatMessages(
 		if (message.role === "system") continue;
 
 		const content = getMessageText(message);
-		const role = message.role === "assistant" ? "ASSISTANT" : "USER";
+		const roleMap: Record<string, "USER" | "ASSISTANT" | "TOOL"> = {
+			user: "USER",
+			assistant: "ASSISTANT",
+			tool: "TOOL",
+		};
+		const role = roleMap[message.role] ?? "USER";
 
 		await prisma.message.upsert({
 			where: { id: message.id },

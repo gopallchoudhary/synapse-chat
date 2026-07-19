@@ -11,7 +11,9 @@ export type SearchResult = {
 const webSearchInputSchema = z.object({
 	query: z
 		.string()
-		.describe("A precise search query to retrieve relevant, current information"),
+		.describe(
+			"A precise search query to retrieve relevant, current information",
+		),
 });
 
 /**
@@ -25,6 +27,7 @@ export const webSearchTool = tool({
 		"Search the web for up-to-date information. Use this when the user asks about recent events, current data, live prices, news, or anything that may have changed after your training cutoff.",
 	inputSchema: webSearchInputSchema,
 	execute: async ({ query }) => {
+		console.log("[web-search-tool] execute called with query:", query);
 		const response = await fetch("https://api.tavily.com/search", {
 			method: "POST",
 			headers: {
@@ -34,7 +37,7 @@ export const webSearchTool = tool({
 			body: JSON.stringify({
 				query,
 				max_results: 3,
-				include_answer: false,
+				include_answer: true,
 				include_raw_content: false,
 				search_depth: "basic",
 			}),
