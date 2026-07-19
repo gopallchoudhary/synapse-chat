@@ -12,13 +12,13 @@ const webSearchInputSchema = z.object({
 	query: z
 		.string()
 		.describe(
-			"A precise search query to retrieve relevant, current information",
+			"A precise search query to retrieve relevant, current information. For live sports scores or match updates, include terms like 'espncricinfo live scorecard' or 'cricbuzz live score' to target live scoreboards.",
 		),
 });
 
 /**
  * AI SDK v7 tool that performs a web search via Tavily.
- * Returns the top 3 results (title, URL, snippet) to keep token usage minimal.
+ * Returns top results with snippet and synthesized answer.
  *
  * Note: AI SDK v7 uses `inputSchema` instead of the v3/v4 `parameters` key.
  */
@@ -28,6 +28,9 @@ export const webSearchTool = tool({
 	inputSchema: webSearchInputSchema,
 	execute: async ({ query }) => {
 		console.log("[web-search-tool] execute called with query:", query);
+
+		const isNewsOrLiveQuery = /live|score|today|news|latest|match|update|breaking|price|standing|schedule/i.test(query);
+
 		const response = await fetch("https://api.tavily.com/search", {
 			method: "POST",
 			headers: {
@@ -36,18 +39,23 @@ export const webSearchTool = tool({
 			},
 			body: JSON.stringify({
 				query,
-				max_results: 3,
+				max_results: isNewsOrLiveQuery ? 5 : 3,
 				include_answer: true,
 				include_raw_content: false,
-				search_depth: "basic",
+				search_depth: "advanced",
+				topic: isNewsOrLiveQuery ? "news" : "general",
 			}),
 		});
+
+
+
 
 		if (!response.ok) {
 			throw new Error(`Tavily search failed: ${response.statusText}`);
 		}
 
 		const data = (await response.json()) as {
+			answer?: string;
 			results?: Array<{ title: string; url: string; content: string }>;
 		};
 
@@ -57,6 +65,10 @@ export const webSearchTool = tool({
 			snippet: r.content,
 		}));
 
-		return results;
+		return {
+			answer: data.answer ?? undefined,
+			results,
+		};
 	},
 });
+

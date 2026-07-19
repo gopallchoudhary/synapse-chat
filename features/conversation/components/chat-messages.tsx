@@ -42,9 +42,19 @@ function SourcesList({ parts }: { parts: UIMessage["parts"] }) {
 				(p as Record<string, unknown>).type !== "text" &&
 				(p as Record<string, unknown>).state === "output-available",
 		)
-		.flatMap((p) =>
-			Array.isArray(p.output) ? (p.output as SearchResult[]) : [],
-		);
+		.flatMap((p) => {
+			if (Array.isArray(p.output)) return p.output as SearchResult[];
+			if (
+				typeof p.output === "object" &&
+				p.output !== null &&
+				"results" in p.output &&
+				Array.isArray((p.output as { results: unknown }).results)
+			) {
+				return (p.output as { results: SearchResult[] }).results;
+			}
+			return [];
+		});
+
 
 	if (results.length === 0) return null;
 

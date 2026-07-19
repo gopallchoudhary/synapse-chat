@@ -11,6 +11,7 @@ import {
 	convertToModelMessages,
 	createIdGenerator,
 	createUIMessageStreamResponse,
+	isStepCount,
 	streamText,
 	toUIMessageStream,
 	type UIMessage,
@@ -61,23 +62,45 @@ export async function POST(req: Request) {
 
 	const tools = webSearch ? { webSearch: webSearchTool } : undefined;
 
+	const currentDate = new Date().toLocaleString("en-US", {
+		weekday: "long",
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+		second: "2-digit",
+		timeZoneName: "short",
+	});
+
+	const webSearchSystemInstruction = webSearch
+		? `\n\nToday's current date and time is ${currentDate}.\nCRITICAL INSTRUCTION: Web search is ENABLED for this user message. You MUST call the \`webSearch\` tool first to retrieve information.
+- For live sports scores or real-time match updates, craft queries that specifically target live scorecards (e.g. include terms like "espncricinfo live scorecard" or "cricbuzz live score" along with current date/year ${currentDate}) so you retrieve exact runs, overs, and wickets data.
+- For historical questions about past years (e.g. 2023, 2024, 2025), search for and provide historical data as requested by the user.
+- Summarize the search results accurately and present the exact live score and current match situation to the user.`
+		: `\n\nToday's current date and time is ${currentDate}.`;
+
+
+
 	const result = streamText({
 		model: getChatModel(conversation.model),
-		system: conversation.systemPrompt ?? "You are a helpful chat assistant",
+		system: (conversation.systemPrompt ?? "You are a helpful chat assistant") + webSearchSystemInstruction,
 		messages: await convertToModelMessages(messages, { tools }),
+
 		// Conditionally enable web search tool when the user opts in per-message.
-		// maxSteps: 3 lets the model call the tool and then generate its response
-		// in a single request while keeping token usage minimal.
-		// toolChoice: "required" forces the model to actually call the search tool
-		// instead of declining with "I don't have real-time data."
+		// stopWhen: isStepCount(3) allows the model to call the tool and then generate
+		// its text response in a single request while keeping token usage minimal.
 		...(webSearch
 			? {
 					tools,
-					maxSteps: 3,
-					toolChoice: "required" as const,
+					stopWhen: isStepCount(3),
 				}
 			: {}),
 	});
+
+
+
+
 
 	return createUIMessageStreamResponse({
 		stream: toUIMessageStream({
