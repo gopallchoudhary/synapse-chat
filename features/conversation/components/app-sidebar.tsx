@@ -42,6 +42,7 @@ import {
 	useUpdateConversation,
 } from "@/features/conversation/hooks/use-conversation";
 import { cn } from "@/lib/utils";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 
 type Conversation = NonNullable<
 	ReturnType<typeof useConversations>["data"]
@@ -234,15 +235,12 @@ function SidebarFooterMenu() {
 	return (
 		<SidebarMenu>
 			<SidebarMenuItem>
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					className="w-full justify-start"
-					onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-				>
-					Toggle theme
-				</Button>
+				<div className="flex items-center gap-2 px-1 py-1.5">
+					<ModeToggle />
+					<span className="truncate text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
+						Theme
+					</span>
+				</div>
 			</SidebarMenuItem>
 			<SidebarMenuItem>
 				<div className="flex items-center gap-2 px-1 py-1.5">
