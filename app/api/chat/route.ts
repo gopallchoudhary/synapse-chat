@@ -12,7 +12,7 @@ import {
 	createUIMessageStreamResponse,
 	streamText,
 	toUIMessageStream,
-	UIMessage,
+	type UIMessage,
 } from "ai";
 
 export async function POST(req: Request) {
